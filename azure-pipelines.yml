@@ -1,0 +1,79 @@
+trigger: none
+
+pool: default
+
+parameters:
+  - name: environment
+    displayName: 'Target Environment'
+    type: string
+    default: 'development'
+    values:
+      - development
+      - production
+
+variables:
+  - name: tf_working_dir
+    value: 'environments/${{ parameters.environment }}'
+
+stages:
+  - stage: Plan
+    jobs:
+      - job: Plan
+        steps:
+          - task: TerraformInstaller@1
+            displayName: Terraform Install
+            inputs:
+              terraformVersion: 'latest'
+          - task: TerraformTask@5
+            displayName: Terraform Init
+            inputs:
+              provider: 'azurerm'
+              command: 'init'
+              workingDirectory: '$(System.DefaultWorkingDirectory)/$(tf_working_dir)'
+              backendAzureRmUseEntraIdForAuthentication: false
+              backendServiceArm: 'srvc'
+              backendAzureRmResourceGroupName: 'rg-rudra'
+              backendAzureRmStorageAccountName: 'todoappaccount'
+              backendAzureRmContainerName: 'tf-state-file'
+              backendAzureRmKey: '${{ parameters.environment }}/${{ parameters.environment }}.tfstate'
+              
+          - task: TerraformTask@5
+            displayName: Terraform Plan
+            inputs:
+              provider: 'azurerm'
+              command: 'plan'
+              workingDirectory: '$(System.DefaultWorkingDirectory)/$(tf_working_dir)'
+              environmentServiceNameAzureRM: 'srvc'
+  - stage: Approval
+    jobs:
+      - job: Approval
+        pool: server
+        steps:
+          - task: ManualValidation@1
+            inputs:
+              notifyUsers: 'nilaysaxena94@gmail.com'
+  
+  - stage: Deploy
+    jobs:
+      - job: Deploy
+        steps:
+          - task: TerraformTask@5
+            displayName: Terraform Init
+            inputs:
+              provider: 'azurerm'
+              command: 'init'
+              workingDirectory: '$(System.DefaultWorkingDirectory)/$(tf_working_dir)'
+              backendAzureRmUseEntraIdForAuthentication: false
+              backendServiceArm: 'srvc'
+              backendAzureRmResourceGroupName: 'rg-rudra'
+              backendAzureRmStorageAccountName: 'todoappaccount'
+              backendAzureRmContainerName: 'tf-state-file'
+              backendAzureRmKey: '${{ parameters.environment }}/${{ parameters.environment }}.tfstate'
+              
+          - task: TerraformTask@5
+            inputs:
+              provider: 'azurerm'
+              command: 'apply'
+              commandOptions: '--auto-approve'
+              environmentServiceNameAzureRM: 'srvc'
+              workingDirectory: '$(System.DefaultWorkingDirectory)/$(tf_working_dir)'
