@@ -80,7 +80,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: tfplan
-          path: .
+          path: environments/${{ inputs.environment }}
 
       - name: Terraform Apply
         run: terraform apply tfplan
