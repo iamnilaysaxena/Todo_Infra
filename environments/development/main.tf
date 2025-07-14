@@ -43,14 +43,14 @@ module "storage_accounts" {
   tags                     = var.tags
 }
 
-module "mssql_databases" {
-  for_each            = var.mssql_databases
-  source              = "../../modules/mssql_database"
-  name                = each.key
-  administrator_login = each.value.username
-  resource_group_name = module.resource_groups[each.value.resource_group_name].name
-  location            = module.resource_groups[each.value.resource_group_name].location
-  databases           = each.value.databases
-  tags                = var.tags
-  existing_key_vault  = each.value.existing_key_vault
-}
+#module "mssql_databases" {
+#  for_each            = var.mssql_databases
+#  source              = "../../modules/mssql_database"
+#  name                = each.key
+#  administrator_login = each.value.username
+#  resource_group_name = module.resource_groups[each.value.resource_group_name].name
+#  location            = module.resource_groups[each.value.resource_group_name].location
+#  databases           = each.value.databases
+#  tags                = var.tags
+#  existing_key_vault  = each.value.existing_key_vault
+#}
