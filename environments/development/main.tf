@@ -4,7 +4,7 @@ module "resource_groups" {
   name     = each.key
   location = each.value.location
   tags     = var.tags
-}
+
 
 
 module "virtual_networks" {
