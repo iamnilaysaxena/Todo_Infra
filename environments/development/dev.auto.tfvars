@@ -7,6 +7,9 @@ resource_groups = {
   rg-todo-app-dev = {
     location = "Canada Central"
   }
+ rg-todo-app-qa = {
+    location = "Canada Central"
+  }
 }
 
 virtual_networks = {
