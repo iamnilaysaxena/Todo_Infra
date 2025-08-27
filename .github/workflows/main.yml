@@ -1,91 +1,48 @@
-name: Terraform Deployment
-
+name: Azure-Infra-Deploy
+ 
 on:
   workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Select environment to deploy'
-        required: true
-        type: choice
-        options:
-          - development
-          - production
-
-permissions:
-  contents: read
-  id-token: write
-
+  
 jobs:
-  plan:
-    name: Terraform Plan (${{ inputs.environment }})
-    runs-on: self-hosted
-    # env:
-    #   ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
-    #   ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
-    #   ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-    #   ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+  deploy:
+    name: Deploy Infra to Azure
+    # runs-on: ubuntu-latest 
+    runs-on: [self-hosted, Windows, X64]
     defaults:
       run:
-        working-directory: environments/${{ inputs.environment }}
+        working-directory: environment/dev
+
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4  
-
-      # - name: Azure Login
-      #   uses: azure/login@v2
-      #   with:
-      #     creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      # - name: Setup Terraform
-      #   uses: hashicorp/setup-terraform@v3.1.2
-
-      - name: Terraform Init
-        run: terraform init
-
-      - name: Format Check
-        run: terraform fmt -check
-
-      - name: Validate
-        run: terraform validate
-
-      - name: Terraform Plan
-        run: terraform plan -out=tfplan
-
-      - name: Upload Plan Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: tfplan
-          path: environments/${{ inputs.environment }}/tfplan
-
-  apply:
-    name: Terraform Apply (${{ inputs.environment }})
-    needs: plan
-    runs-on: self-hosted
-    env:
-      ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
-      ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
-      ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-      ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
-    environment:
-      name: ${{ inputs.environment }}
-    defaults:
-      run:
-        working-directory: environments/${{ inputs.environment }}
-    steps:
-      - name: Checkout Code
+      - name: Checkout Repository
         uses: actions/checkout@v4
-
-      # - name: Setup Terraform
-      #   uses: hashicorp/setup-terraform@v3.1.2
-
-      - name: Terraform Init
-        run: terraform init
-
-      - name: Download Plan Artifact
-        uses: actions/download-artifact@v4
+      - name: Azure Login
+        uses: azure/login@v2
         with:
-          name: tfplan
-          path: environments/${{ inputs.environment }}
-
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      # - name: Setup Terraform
+      #   uses: hashicorp/setup-terraform@v3
+        # with:
+        #   terraform_version: 1.10.5
+      - name: Terraform Init
+        # working-directory: environment/dev
+        run: terraform init
+ 
+      - name: Terraform Format Check
+        run: terraform fmt
+ 
+      - name: Terraform Validate
+        # working-directory: environment/dev
+        run: terraform validate
+ 
+      - name: Run TFSec (Security Scan)
+        # uses: aquasecurity/tfsec-action@v1.28.1
+        run: tfsec .
+ 
+      - name: Terraform Plan
+        # working-directory: environment/dev
+        run: terraform plan
+ 
       - name: Terraform Apply
-        run: terraform apply tfplan
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        # working-directory: environment/dev
+        run: terraform apply -auto-approve
