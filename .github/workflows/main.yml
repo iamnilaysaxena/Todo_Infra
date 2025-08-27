@@ -10,7 +10,7 @@ jobs:
     runs-on: [self-hosted, Windows, X64]
     defaults:
       run:
-        working-directory: environment/dev
+        working-directory: environments/development
 
     steps:
       - name: Checkout Repository
