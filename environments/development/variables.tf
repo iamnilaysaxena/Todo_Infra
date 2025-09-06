@@ -56,3 +56,16 @@ variable "storage_accounts" {
   }))
   default = {}
 }
+
+variable "load_balancers" {
+  type = map(object({
+    resource_group_name            = string
+    frontend_ip_configuration_name = string
+    backend_pools = map(object({
+      port = number
+      vms  = list(string)
+    }))
+
+  }))
+  default = {}
+}

@@ -9,3 +9,7 @@ output "privateip" {
 output "publicip" {
   value = var.is_public_ip_needed ? azurerm_public_ip.pip[0].ip_address : null
 }
+
+output "nicid" {
+  value = azurerm_network_interface.nic.id
+}

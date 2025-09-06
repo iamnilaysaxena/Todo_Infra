@@ -18,30 +18,30 @@ module "virtual_networks" {
   tags                = var.tags
 }
 
-# module "vms" {
-#   for_each            = var.vms
-#   source              = "../../modules/vm"
-#   name                = each.key
-#   subnet_id           = module.virtual_networks[each.value.virtual_network_name].subnet_ids[each.value.subnet_name]
-#   resource_group_name = module.resource_groups[each.value.resource_group_name].name
-#   location            = module.resource_groups[each.value.resource_group_name].location
-#   size                = each.value.size
-#   public_key          = file(each.value.public_key)
-#   custom_data         = each.value.custom_data
-#   is_public_ip_needed = each.value.is_public_ip_needed
-#   inbound_ports       = each.value.inbound_ports
-#   tags                = var.tags
-# }
-
-module "storage_accounts" {
-  for_each                 = var.storage_accounts
-  source                   = "../../modules/storage_account"
-  name                     = each.key
-  resource_group_name      = module.resource_groups[each.value.resource_group_name].name
-  location                 = module.resource_groups[each.value.resource_group_name].location
-  account_replication_type = each.value.account_replication_type
-  tags                     = var.tags
+module "vms" {
+  for_each            = var.vms
+  source              = "../../modules/vm"
+  name                = each.key
+  subnet_id           = module.virtual_networks[each.value.virtual_network_name].subnet_ids[each.value.subnet_name]
+  resource_group_name = module.resource_groups[each.value.resource_group_name].name
+  location            = module.resource_groups[each.value.resource_group_name].location
+  size                = each.value.size
+  public_key          = file(each.value.public_key)
+  custom_data         = each.value.custom_data
+  is_public_ip_needed = each.value.is_public_ip_needed
+  inbound_ports       = each.value.inbound_ports
+  tags                = var.tags
 }
+
+# module "storage_accounts" {
+#   for_each                 = var.storage_accounts
+#   source                   = "../../modules/storage_account"
+#   name                     = each.key
+#   resource_group_name      = module.resource_groups[each.value.resource_group_name].name
+#   location                 = module.resource_groups[each.value.resource_group_name].location
+#   account_replication_type = each.value.account_replication_type
+#   tags                     = var.tags
+# }
 
 #module "mssql_databases" {
 #  for_each            = var.mssql_databases
@@ -54,3 +54,15 @@ module "storage_accounts" {
 #  tags                = var.tags
 #  existing_key_vault  = each.value.existing_key_vault
 #}
+
+module "load_balancers" {
+  for_each                       = var.load_balancers
+  source                         = "../../modules/load_balancer"
+  name                           = each.key
+  resource_group_name            = module.resource_groups[each.value.resource_group_name].name
+  location                       = module.resource_groups[each.value.resource_group_name].location
+  tags                           = var.tags
+  frontend_ip_configuration_name = each.value.frontend_ip_configuration_name
+  backend_pools                  = each.value.backend_pools
+  vm_nicid_mapping               = { for k, v in module.vms : k => v.nicid }
+}
