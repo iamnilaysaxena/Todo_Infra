@@ -55,14 +55,14 @@ module "vms" {
 #  existing_key_vault  = each.value.existing_key_vault
 #}
 
-module "load_balancers" {
-  for_each                       = var.load_balancers
-  source                         = "../../modules/load_balancer"
-  name                           = each.key
-  resource_group_name            = module.resource_groups[each.value.resource_group_name].name
-  location                       = module.resource_groups[each.value.resource_group_name].location
-  tags                           = var.tags
-  frontend_ip_configuration_name = each.value.frontend_ip_configuration_name
-  backend_pools                  = each.value.backend_pools
-  vm_nicid_mapping               = { for k, v in module.vms : k => v.nicid }
-}
+# module "load_balancers" {
+#   for_each                       = var.load_balancers
+#   source                         = "../../modules/load_balancer"
+#   name                           = each.key
+#   resource_group_name            = module.resource_groups[each.value.resource_group_name].name
+#   location                       = module.resource_groups[each.value.resource_group_name].location
+#   tags                           = var.tags
+#   frontend_ip_configuration_name = each.value.frontend_ip_configuration_name
+#   backend_pools                  = each.value.backend_pools
+#   vm_nicid_mapping               = { for k, v in module.vms : k => v.nicid }
+# }
