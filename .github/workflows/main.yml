@@ -10,73 +10,105 @@ on:
         options:
           - development
           - production
+      apply_changes:
+        description: 'Apply Terraform changes'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
   id-token: write
+  pull-requests: write
 
 jobs:
   plan:
     name: Terraform Plan (${{ inputs.environment }})
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
+
     env:
       ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
       ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
       ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
       ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+      INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}
+
     defaults:
       run:
         working-directory: environments/${{ inputs.environment }}
+
     steps:
-      - name: Checkout Code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      # - name: Setup Terraform
-      #   uses: hashicorp/setup-terraform@v3.1.2
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init
         run: terraform init
 
-      - name: Format Check
+      - name: Terraform Format Check
         run: terraform fmt -check
 
-      - name: Validate
+      - name: Terraform Validate
         run: terraform validate
 
       - name: Terraform Plan
         run: terraform plan -out=tfplan
 
-      - name: Upload Plan Artifact
+      - name: Upload Terraform Plan
         uses: actions/upload-artifact@v4
         with:
           name: tfplan
           path: environments/${{ inputs.environment }}/tfplan
 
+      # ---------------- Infracost ----------------
+      - name: Setup Infracost
+        uses: infracost/actions/setup@v3
+
+      - name: Generate Infracost breakdown
+        run: |
+          infracost breakdown \
+            --path . \
+            --format json \
+            --out-file infracost.json
+
+      - name: Publish Infracost cost summary
+        run: |
+          infracost breakdown \
+            --path . \
+            --format github-actions-summary
+
   apply:
     name: Terraform Apply (${{ inputs.environment }})
     needs: plan
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
+
+    if: inputs.apply_changes == true
+
     env:
       ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
       ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
       ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
       ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+
     environment:
       name: ${{ inputs.environment }}
+
     defaults:
       run:
         working-directory: environments/${{ inputs.environment }}
+
     steps:
-      - name: Checkout Code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      # - name: Setup Terraform
-      #   uses: hashicorp/setup-terraform@v3.1.2
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init
         run: terraform init
 
-      - name: Download Plan Artifact
+      - name: Download Terraform Plan
         uses: actions/download-artifact@v4
         with:
           name: tfplan
