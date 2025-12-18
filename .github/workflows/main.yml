@@ -70,21 +70,14 @@ jobs:
         run: |
           infracost breakdown \
             --path . \
-            --format json \
-            --out-file infracost.json
-
-      - name: Generate Infracost diff
-        run: |
-          infracost diff \
-            --path infracost.json \
-            --format diff \
-            > infracost-diff.txt
+            --format table \
+            > infracost.txt
 
       - name: Publish cost summary
         run: |
-          echo "## 💰 Infracost Cost Estimate" >> $GITHUB_STEP_SUMMARY
+          echo "## 💰 Infracost Monthly Cost Estimate" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          cat infracost-diff.txt >> $GITHUB_STEP_SUMMARY
+          cat infracost.txt >> $GITHUB_STEP_SUMMARY
 
   apply:
     name: Terraform Apply (${{ inputs.environment }})
