@@ -62,6 +62,10 @@ jobs:
           name: tfplan
           path: environments/${{ inputs.environment }}/tfplan
 
+      # ---------------- Infracost ----------------
+      - name: Setup Infracost
+        uses: infracost/actions/setup@v3
+
       - name: Generate Infracost breakdown
         run: |
           infracost breakdown \
@@ -81,7 +85,7 @@ jobs:
           echo "## 💰 Infracost Cost Estimate" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           cat infracost-diff.txt >> $GITHUB_STEP_SUMMARY
-          
+
   apply:
     name: Terraform Apply (${{ inputs.environment }})
     needs: plan
