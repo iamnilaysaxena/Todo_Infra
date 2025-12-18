@@ -20,6 +20,6 @@ output "vm_ids" {
 #   value = { for sa, value in module.storage_accounts : sa => value.id }
 # }
 
-output "lb_ips" {
-  value = { for lb, value in module.load_balancers : lb => value.publicip }
-}
+# output "lb_ips" {
+#   value = { for lb, value in module.load_balancers : lb => value.publicip }
+# }
