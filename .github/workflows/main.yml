@@ -73,10 +73,10 @@ jobs:
             --format json \
             --out-file infracost.json
 
-      - name: Publish Infracost cost summary
+      - name: Publish Infracost summary
         run: |
-          infracost breakdown \
-            --path . \
+          infracost diff \
+            --path infracost.json \
             --format github-actions-summary
 
   apply:
